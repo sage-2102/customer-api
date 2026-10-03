@@ -11,10 +11,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import customer_api.dto.CustomerRequest;
 import customer_api.dto.CustomerResponse;
+import customer_api.entity.CustomerStatus;
 import customer_api.service.CustomerService;
 import jakarta.validation.Valid;
 
@@ -35,8 +37,10 @@ public class CustomerController {
     }
 
     @GetMapping
-    public List<CustomerResponse> getAllCustomers() {
-        return customerService.getAllCustomers();
+    public List<CustomerResponse> getAllCustomers(
+            @RequestParam(required = false) CustomerStatus status,
+            @RequestParam(required = false) String name) {
+        return customerService.getAllCustomers(status, name);
     }
 
     @GetMapping("/{id}")

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import customer_api.dto.CustomerRequest;
 import customer_api.dto.CustomerResponse;
 import customer_api.entity.Customer;
+import customer_api.entity.CustomerStatus;
 import customer_api.exception.DuplicateResourceException;
 import customer_api.exception.ResourceNotFoundException;
 import customer_api.repository.CustomerRepository;
@@ -32,8 +33,12 @@ public class CustomerService {
         return CustomerResponse.from(customerRepository.save(customer));
     }
 
-    public List<CustomerResponse> getAllCustomers() {
-        return customerRepository.findAll()
+    public List<CustomerResponse> getAllCustomers(CustomerStatus status, String name) {
+        List<CustomerStatus> statuses =
+                status == null ? List.of(CustomerStatus.values()) : List.of(status);
+        String search = name == null ? "" : name.trim();
+
+        return customerRepository.search(statuses, search)
                 .stream()
                 .map(CustomerResponse::from)
                 .toList();
