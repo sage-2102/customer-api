@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import customer_api.dto.CustomerRequest;
+import customer_api.dto.CustomerResponse;
 import customer_api.entity.Customer;
 import customer_api.exception.DuplicateResourceException;
 import customer_api.exception.ResourceNotFoundException;
@@ -20,47 +22,60 @@ public class CustomerService {
     }
 
     @Transactional
-    public Customer createCustomer(Customer customer) {
-        if (customerRepository.existsByEmail(customer.getEmail())) {
+    public CustomerResponse createCustomer(CustomerRequest request) {
+        if (customerRepository.existsByEmail(request.email())) {
             throw new DuplicateResourceException(
-                    "Customer with email " + customer.getEmail() + " already exists");
+                    "Customer with email " + request.email() + " already exists");
         }
-        return customerRepository.save(customer);
+        Customer customer = new Customer();
+        applyRequest(customer, request);
+        return CustomerResponse.from(customerRepository.save(customer));
     }
 
-    public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
+    public List<CustomerResponse> getAllCustomers() {
+        return customerRepository.findAll()
+                .stream()
+                .map(CustomerResponse::from)
+                .toList();
     }
 
-    public Customer getCustomerById(Long id) {
+    public CustomerResponse getCustomerById(Long id) {
+        return CustomerResponse.from(findCustomerOrThrow(id));
+    }
+
+    @Transactional
+    public CustomerResponse updateCustomer(Long id, CustomerRequest request) {
+        Customer existing = findCustomerOrThrow(id);
+
+        boolean emailChanged = !existing.getEmail().equals(request.email());
+        if (emailChanged && customerRepository.existsByEmail(request.email())) {
+            throw new DuplicateResourceException(
+                    "Customer with email " + request.email() + " already exists");
+        }
+
+        applyRequest(existing, request);
+        return CustomerResponse.from(customerRepository.save(existing));
+    }
+
+    @Transactional
+    public void deleteCustomer(Long id) {
+        customerRepository.delete(findCustomerOrThrow(id));
+    }
+
+    private Customer findCustomerOrThrow(Long id) {
         return customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Customer not found with id " + id));
     }
 
-    @Transactional
-    public Customer updateCustomer(Long id, Customer updated) {
-        Customer existing = getCustomerById(id);
-
-        boolean emailChanged = !existing.getEmail().equals(updated.getEmail());
-        if (emailChanged && customerRepository.existsByEmail(updated.getEmail())) {
-            throw new DuplicateResourceException(
-                    "Customer with email " + updated.getEmail() + " already exists");
+    private void applyRequest(Customer customer, CustomerRequest request) {
+        customer.setFirstName(request.firstName());
+        customer.setLastName(request.lastName());
+        customer.setEmail(request.email());
+        customer.setPhone(request.phone());
+        customer.setAddress(request.address());
+        if (request.status() != null) {
+            customer.setStatus(request.status());
         }
-
-        existing.setFirstName(updated.getFirstName());
-        existing.setLastName(updated.getLastName());
-        existing.setEmail(updated.getEmail());
-        existing.setPhone(updated.getPhone());
-        existing.setAddress(updated.getAddress());
-        existing.setStatus(updated.getStatus());
-
-        return customerRepository.save(existing);
-    }
-
-    @Transactional
-    public void deleteCustomer(Long id) {
-        Customer existing = getCustomerById(id);
-        customerRepository.delete(existing);
     }
 }

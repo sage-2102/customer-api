@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import customer_api.entity.Customer;
+import customer_api.dto.CustomerRequest;
+import customer_api.dto.CustomerResponse;
 import customer_api.service.CustomerService;
 
 @RestController
@@ -27,24 +28,24 @@ public class CustomerController {
     }
 
     @PostMapping
-    public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer) {
-        Customer saved = customerService.createCustomer(customer);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public ResponseEntity<CustomerResponse> createCustomer(@RequestBody CustomerRequest request) {
+        CustomerResponse created = customerService.createCustomer(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping
-    public List<Customer> getAllCustomers() {
+    public List<CustomerResponse> getAllCustomers() {
         return customerService.getAllCustomers();
     }
 
     @GetMapping("/{id}")
-    public Customer getCustomerById(@PathVariable Long id) {
+    public CustomerResponse getCustomerById(@PathVariable Long id) {
         return customerService.getCustomerById(id);
     }
 
     @PutMapping("/{id}")
-    public Customer updateCustomer(@PathVariable Long id, @RequestBody Customer customer) {
-        return customerService.updateCustomer(id, customer);
+    public CustomerResponse updateCustomer(@PathVariable Long id, @RequestBody CustomerRequest request) {
+        return customerService.updateCustomer(id, request);
     }
 
     @DeleteMapping("/{id}")
